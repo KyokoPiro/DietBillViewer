@@ -1,0 +1,59 @@
+name: Update Bill Data
+
+on:
+  schedule:
+    # 毎日12:40 JST (03:40 UTC)
+    - cron: '40 3 * * *'
+  
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # リポジトリをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 最新データをダウンロード
+      - name: Download latest data
+        run: |
+          echo "📥 データをダウンロード中..."
+          curl -o data/gian_summary.json \
+            https://raw.githubusercontent.com/smartnews-smri/house-of-representatives/main/data/gian_summary.json
+          echo "✅ ダウンロード完了"
+      
+      # 変更があるか確認
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet data/gian_summary.json; then
+            echo "変更なし"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "変更あり！"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      # 変更があればcommit & push
+      - name: Commit and push if changed
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data/gian_summary.json
+          git commit -m "🤖 自動更新: 法案データ ($(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST'))"
+          git push
+      
+      # 結果を表示
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            echo "✅ データを更新しました！"
+          else
+            echo "ℹ️ 変更はありませんでした"
+          fi
