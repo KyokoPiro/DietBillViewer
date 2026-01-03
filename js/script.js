@@ -155,21 +155,22 @@ function generateTable(rowField, colField) {
             }
             .tooltip-content {
                 display: none;
-                position: absolute;
+                
+                position: fixed;
                 background-color: white;
                 border: 2px solid #dbbb7f;
                 border-radius: 8px;
                 padding: 12px;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4), 0 12px 20px -8px rgb(0 0 0 / 0.3);
+                animation: tooltipFadeIn 0.2s ease-out;
                 z-index: 1000;
                 min-width: 300px;
                 max-width: 500px;
                 max-height: 400px;
                 overflow-y: auto;
                 left: 50%;
-                top: 100%;
-                transform: translateX(-50%);
-                margin-top: 8px;
+                top: 50%;
+                transform: translate(-50%, -50%);
                 font-size: 12px;
                 line-height: 1.6;
             }
@@ -184,6 +185,24 @@ function generateTable(rowField, colField) {
             .tooltip-content li {
                 margin: 4px 0;
             }
+
+            @keyframes tooltipFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -45%);  /* 少し上から */
+                    box-shadow: 
+                        0 10px 20px -5px rgb(0 0 0 / 0.2),  /* 影が小さい */
+                        0 5px 10px -4px rgb(0 0 0 / 0.15);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%);  /* 本来の位置 */
+                    box-shadow: 
+                        0 25px 50px -12px rgb(0 0 0 / 0.4),  /* 影が大きい */
+                        0 12px 20px -8px rgb(0 0 0 / 0.3);
+                }
+            }
+
         </style>
         <div style="margin-bottom: 16px;">
             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">${rowField} × ${colField} のクロス集計</h2>
