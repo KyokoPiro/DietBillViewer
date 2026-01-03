@@ -2,8 +2,8 @@ name: Update Bill Data
 
 on:
   schedule:
-    # 毎日12:40 JST (03:40 UTC)
-    - cron: '40 3 * * *'
+    # 毎日0:00 JST
+    - cron: '0 15 * * *'
   
   # 手動実行も可能
   workflow_dispatch:
