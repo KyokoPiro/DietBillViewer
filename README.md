@@ -2,7 +2,7 @@
 
 国会に提出された法案データを視覚的に分析するWebアプリケーション。
 
-**デモサイト:** https://あなたのユーザー名.github.io/リポジトリ名/
+**デモサイト:** https://KyokoPiro.github.io/DietBillViewer/
 
 ---
 
