@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# エディタ
+.vscode/
+.idea/
+
+# 一時ファイル
+*.log
+*.tmp
+
+# 環境変数
+.env

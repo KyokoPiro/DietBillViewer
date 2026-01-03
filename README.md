@@ -1,0 +1,46 @@
+# 国会法案ビジュアライザー
+
+国会に提出された法案データを視覚的に分析するWebアプリケーション。
+
+**デモサイト:** https://あなたのユーザー名.github.io/リポジトリ名/
+
+---
+
+## 機能
+
+- ドラッグ&ドロップで項目選択
+- クロス集計表の自動生成
+- セルをホバーで法案詳細を表示
+- 毎日12:30 JSTに自動データ更新
+
+---
+
+## 技術スタック
+
+- HTML5
+- JavaScript (Vanilla)
+- Tailwind CSS
+- GitHub Actions
+
+---
+
+## データ出典
+
+スマートニュース メディア研究所が公開している国会法案データを使用。
+
+- 元リポジトリ: [house-of-representatives](https://github.com/smartnews-smri/house-of-representatives)
+- ライセンス: MIT License
+
+---
+
+## ライセンス
+
+MIT License
+
+- データ: Copyright (c) 2022 smartnews-smri
+- UI実装: Copyright (c) 2025 あなたの名前
+
+詳細は [LICENSE](./LICENSE) を参照。
+```
+
+---
