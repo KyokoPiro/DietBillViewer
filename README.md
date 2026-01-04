@@ -11,7 +11,11 @@
 - ドラッグ&ドロップで項目選択
 - クロス集計表の自動生成
 - セルをホバーで法案詳細を表示
-- 毎日12:30 JSTに自動データ更新
+- 毎日0:00 JSTに自動データ更新
+
+<img width="620" height="81" alt="Image" src="https://github.com/user-attachments/assets/8ff90c7b-450c-4cad-a247-658b56b7f3f6" />
+
+
 
 ---
 
@@ -21,8 +25,6 @@
 - JavaScript (Vanilla)
 - Tailwind CSS
 - GitHub Actions
-
-<img width="620" height="81" alt="Image" src="https://github.com/user-attachments/assets/8ff90c7b-450c-4cad-a247-658b56b7f3f6" />
 
 ---
 
