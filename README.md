@@ -42,7 +42,7 @@
 MIT License
 
 - データ: Copyright (c) 2022 smartnews-smri
-- UI実装: Copyright (c) 2025 あなたの名前
+- UI実装: Copyright (c) 2025 KyokoPiro
 
 詳細は [LICENSE](./LICENSE) を参照。
 ```
