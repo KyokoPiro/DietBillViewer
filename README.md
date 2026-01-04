@@ -22,6 +22,8 @@
 - Tailwind CSS
 - GitHub Actions
 
+<img width="620" height="81" alt="Image" src="https://github.com/user-attachments/assets/8ff90c7b-450c-4cad-a247-658b56b7f3f6" />
+
 ---
 
 ## データ出典
