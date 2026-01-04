@@ -45,6 +45,3 @@ MIT License
 - UI実装: Copyright (c) 2025 KyokoPiro
 
 詳細は [LICENSE](./LICENSE) を参照。
-```
-
----
