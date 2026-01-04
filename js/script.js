@@ -5,43 +5,52 @@ let billData = [];
 
 // データを整形する関数
 function loadData() {
-    fetch('../data/gian_summary.json')
+    console.log('データ読み込み開始...');
+    
+    fetch('./data/gian_summary.json')  // パス修正: ../ → ./
         .then(response => {
+            console.log('レスポンス取得:', response.ok);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(rawData => {
-            // JSONデータを整形
+            console.log('生データ取得:', rawData.length, '件');
+            console.log('最初の1件:', rawData[0]);
+            
             billData = rawData.map(item => {
-                // 最新の審議状況を取得（経過情報の最後の要素）
-                const latestStatus = item[10] && item[10].length > 0 
-                    ? item[10][item[10].length - 1][1] 
-                    : item[5];
-                
-                // 提出会期（最初の提出会期または最新の会期）
-                const sessionNumber = item[1];
+                // データが配列形式か確認
+                if (!Array.isArray(item)) {
+                    console.error('想定外のデータ形式:', item);
+                    return null;
+                }
                 
                 return {
-                    "提出会期": `第${sessionNumber}回`,
+                    "提出会期": `第${item[1]}回`,
                     "提出者": item[6] || "-",
                     "提出会派": item[7] || "-",
-                    "審議状況": latestStatus || item[5],
-                    "議院": item[0] === "衆法" ? "衆議院" : "参議院",
+                    "審議状況": item[5] || "-",
+                    "議院": item[0] === "衆法" ? "衆議院" : 
+                            item[0] === "参法" ? "参議院" : "-",
                     "法案名": item[3],
                     "番号": item[2]
                 };
-            });
+            }).filter(item => item !== null);  // nullを除外
             
-            console.log(`${billData.length}件の法案データを読み込みました`);
+            console.log('データ整形完了:', billData.length, '件');
+            console.log('整形後の最初の3件:', billData.slice(0, 3));
         })
         .catch(error => {
-            console.error('データの読み込みに失敗しました:', error);
+            console.error('データ読み込みエラー:', error);
+            alert('データの読み込みに失敗しました。コンソールを確認してください。');
+            
             // エラー時はサンプルデータを使用
             billData = [
-                { 提出会期: "第139回", 提出者: "熊代　昭彦君外四名", 提出会派: "自由民主党; 社会民主党・市民連合; 新党さきがけ", 審議状況: "成立", 議院: "衆議院", 法案名: "市民活動促進法案", 番号: "18" }
+                {"提出会期": "第139回", "議院": "衆議院", "法案名": "サンプル法案A", "提出者": "田中太郎", "提出会派": "自由民主党", "審議状況": "成立", "番号": "1"},
+                {"提出会期": "第140回", "議院": "参議院", "法案名": "サンプル法案B", "提出者": "佐藤花子", "提出会派": "民主党", "審議状況": "審議中", "番号": "2"}
             ];
+            console.log('サンプルデータを使用:', billData.length, '件');
         });
 }
 
