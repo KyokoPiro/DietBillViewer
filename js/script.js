@@ -5,9 +5,14 @@ let billData = [];
 
 // データを整形する関数
 function loadData() {
-    console.log('データ読み込み開始...');
+    console.log('=== データ読み込み開始 ===');
     
-    fetch('./data/gian_summary.json')  // パス修正: ../ → ./
+    const timestamp = new Date().getTime();
+    const url = `./data/gian_summary.json?t=${timestamp}`;
+    
+    console.log('読み込みURL:', url);
+    
+    fetch(url)
         .then(response => {
             console.log('レスポンス取得:', response.ok);
             if (!response.ok) {
@@ -19,8 +24,12 @@ function loadData() {
             console.log('生データ取得:', rawData.length, '件');
             console.log('最初の1件:', rawData[0]);
             
-            billData = rawData.map(item => {
-                // データが配列形式か確認
+            billData = rawData.map(outerArray => {
+                // ★ 重要: 各要素が配列で囲まれているので、最初の要素を取得
+                const item = Array.isArray(outerArray) && outerArray.length > 0 
+                    ? outerArray[0]  // ← 配列の最初の要素を取得
+                    : outerArray;    // ← 念のため元の形式にも対応
+                
                 if (!Array.isArray(item)) {
                     console.error('想定外のデータ形式:', item);
                     return null;
@@ -36,16 +45,28 @@ function loadData() {
                     "法案名": item[3],
                     "番号": item[2]
                 };
-            }).filter(item => item !== null);  // nullを除外
+            }).filter(item => item !== null);
             
             console.log('データ整形完了:', billData.length, '件');
-            console.log('整形後の最初の3件:', billData.slice(0, 3));
+            
+            // 会期の一覧を確認
+            const sessions = [...new Set(billData.map(d => d.提出会期))].sort();
+            console.log('会期一覧:', sessions);
+            console.log('会期数:', sessions.length);
+            
+            // 会期別件数
+            const sessionCounts = {};
+            billData.forEach(d => {
+                sessionCounts[d.提出会期] = (sessionCounts[d.提出会期] || 0) + 1;
+            });
+            console.log('会期別件数:', sessionCounts);
+            
+            console.log('=== データ読み込み完了 ===');
         })
         .catch(error => {
             console.error('データ読み込みエラー:', error);
             alert('データの読み込みに失敗しました。コンソールを確認してください。');
             
-            // エラー時はサンプルデータを使用
             billData = [
                 {"提出会期": "第139回", "議院": "衆議院", "法案名": "サンプル法案A", "提出者": "田中太郎", "提出会派": "自由民主党", "審議状況": "成立", "番号": "1"},
                 {"提出会期": "第140回", "議院": "参議院", "法案名": "サンプル法案B", "提出者": "佐藤花子", "提出会派": "民主党", "審議状況": "審議中", "番号": "2"}
