@@ -12,7 +12,7 @@ function loadData() {
     
     console.log('読み込みURL:', url);
     
-    fetch(url)
+    return fetch(url)
         .then(response => {
             console.log('レスポンス取得:', response.ok);
             if (!response.ok) {
@@ -24,11 +24,11 @@ function loadData() {
             console.log('生データ取得:', rawData.length, '件');
             console.log('最初の1件:', rawData[0]);
             
-            billData = rawData.map(outerArray => {
-                // ★ 重要: 各要素が配列で囲まれているので、最初の要素を取得
-                const item = Array.isArray(outerArray) && outerArray.length > 0 
-                    ? outerArray[0]  // ← 配列の最初の要素を取得
-                    : outerArray;    // ← 念のため元の形式にも対応
+            billData = rawData.map(item => {
+                // ネストチェック: 2重配列なら1つ剥がす
+                if (Array.isArray(item) && item.length > 0 && Array.isArray(item[0])) {
+                    item = item[0];  // [[...]] → [...]
+                }
                 
                 if (!Array.isArray(item)) {
                     console.error('想定外のデータ形式:', item);
@@ -41,7 +41,11 @@ function loadData() {
                     "提出会派": item[7] || "-",
                     "審議状況": item[5] || "-",
                     "議院": item[0] === "衆法" ? "衆議院" : 
-                            item[0] === "参法" ? "参議院" : "-",
+                            item[0] === "参法" ? "参議院" : 
+                            item[0] === "閣法" ? "閣法" :
+                            item[0] === "予算" ? "予算" :
+                            item[0] === "条約" ? "条約" :
+                            item[0] === "承認" ? "承認" : "-",
                     "法案名": item[3],
                     "番号": item[2]
                 };
@@ -49,12 +53,10 @@ function loadData() {
             
             console.log('データ整形完了:', billData.length, '件');
             
-            // 会期の一覧を確認
             const sessions = [...new Set(billData.map(d => d.提出会期))].sort();
             console.log('会期一覧:', sessions);
             console.log('会期数:', sessions.length);
             
-            // 会期別件数
             const sessionCounts = {};
             billData.forEach(d => {
                 sessionCounts[d.提出会期] = (sessionCounts[d.提出会期] || 0) + 1;
@@ -62,6 +64,8 @@ function loadData() {
             console.log('会期別件数:', sessionCounts);
             
             console.log('=== データ読み込み完了 ===');
+            
+            return billData;
         })
         .catch(error => {
             console.error('データ読み込みエラー:', error);
@@ -72,6 +76,8 @@ function loadData() {
                 {"提出会期": "第140回", "議院": "参議院", "法案名": "サンプル法案B", "提出者": "佐藤花子", "提出会派": "民主党", "審議状況": "審議中", "番号": "2"}
             ];
             console.log('サンプルデータを使用:', billData.length, '件');
+            
+            return billData;
         });
 }
 
@@ -81,7 +87,8 @@ function generateTable(rowField, colField) {
     const tableContainer = document.getElementById("table-container");
     
     if (billData.length === 0) {
-        alert('データが読み込まれていません');
+        alert('データが読み込まれていません。ページを再読み込みしてください。');
+        console.error('generateTable呼び出し時、billData.length = 0');
         return;
     }
     
@@ -405,108 +412,112 @@ function resetDisplay() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // データを読み込む
-    loadData();
-    
-    const items = document.querySelectorAll("[draggable='true']");
-    const zones = document.querySelectorAll(".drop-zone");
-    const updateBtn = document.getElementById("update-btn");
-    const resetBtn = document.getElementById("reset-btn");
+    // データを読み込む（完了を待つ）
+    loadData().then(() => {
+        console.log('✅ データ読み込み完了、イベント設定開始');
+        
+        const items = document.querySelectorAll("[draggable='true']");
+        const zones = document.querySelectorAll(".drop-zone");
+        const updateBtn = document.getElementById("update-btn");
+        const resetBtn = document.getElementById("reset-btn");
 
-    items.forEach(item => {
-        item.addEventListener("dragstart", e => {
-            const label = item.dataset.label || item.querySelector(".item-label")?.textContent.trim();
-            e.dataTransfer.setData("text/plain", label);
-        });
-    });
-
-    zones.forEach(zone => {
-        zone.addEventListener("dragover", e => {
-            e.preventDefault();
+        items.forEach(item => {
+            item.addEventListener("dragstart", e => {
+                const label = item.dataset.label || item.querySelector(".item-label")?.textContent.trim();
+                e.dataTransfer.setData("text/plain", label);
+            });
         });
 
-        zone.addEventListener("drop", e => {
-            e.preventDefault();
-            const text = e.dataTransfer.getData("text/plain");
-
-            // もう片方のゾーンを取得
-            const otherZone = zone.classList.contains("row-zone")
-                ? document.querySelector(".col-zone")
-                : document.querySelector(".row-zone");
-
-            // 他方に同じ要素があるかチェック
-            const existsInOther = Array.from(otherZone.children).some(
-                child => {
-                    const childText = child.textContent.trim().replace("×", "").trim();
-                    return childText === text;
-                }
-            );
-
-            // 現在のゾーンに同じ要素があるかチェック
-            const existsInCurrent = Array.from(zone.children).some(
-                child => {
-                    const childText = child.textContent.trim().replace("×", "").trim();
-                    return childText === text;
-                }
-            );
-
-            if (existsInOther) {
-                alert("この項目はすでにもう一方に設定されています。");
-                return;
-            }
-
-            if (existsInCurrent) {
-                alert("この項目はすでにこのゾーンに設定されています。");
-                return;
-            }
-
-            // 1つだけに制限 → 既存をクリア
-            zone.innerHTML = "";
-            const newItem = document.createElement("div");
-            newItem.className = "flex items-center justify-between p-2 rounded-md border bg-slate-100 dark:bg-slate-700";
-
-            // ラベル部分
-            const labelSpan = document.createElement("span");
-            labelSpan.textContent = text;
-
-            // ×ボタン部分
-            const removeBtn = document.createElement("button");
-            removeBtn.innerHTML = "×";
-            removeBtn.className = "ml-2 text-red-500 font-bold cursor-pointer";
-
-            // 削除イベント
-            removeBtn.addEventListener("click", () => {
-                zone.innerHTML = `
-                <div class="flex max-w-xs flex-col items-center gap-1 text-center">
-                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">
-                        ${zone.classList.contains("row-zone") ? "行項目をドラッグ＆ドロップ" : "列項目をドラッグ＆ドロップ"}
-                    </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        利用可能な項目から項目をここにドラッグして、表を定義します。
-                    </p>
-                </div>
-                `;
-                // 削除後に表示を更新
-                updateDisplay();
+        zones.forEach(zone => {
+            zone.addEventListener("dragover", e => {
+                e.preventDefault();
             });
 
-            // 要素を組み立てて追加
-            newItem.appendChild(labelSpan);
-            newItem.appendChild(removeBtn);
-            zone.appendChild(newItem);
-            
-            // ドロップ後に自動的に表示を更新
+            zone.addEventListener("drop", e => {
+                e.preventDefault();
+                const text = e.dataTransfer.getData("text/plain");
+
+                // もう片方のゾーンを取得
+                const otherZone = zone.classList.contains("row-zone")
+                    ? document.querySelector(".col-zone")
+                    : document.querySelector(".row-zone");
+
+                // 他方に同じ要素があるかチェック
+                const existsInOther = Array.from(otherZone.children).some(
+                    child => {
+                        const childText = child.textContent.trim().replace("×", "").trim();
+                        return childText === text;
+                    }
+                );
+
+                // 現在のゾーンに同じ要素があるかチェック
+                const existsInCurrent = Array.from(zone.children).some(
+                    child => {
+                        const childText = child.textContent.trim().replace("×", "").trim();
+                        return childText === text;
+                    }
+                );
+
+                if (existsInOther) {
+                    alert("この項目はすでにもう一方に設定されています。");
+                    return;
+                }
+
+                if (existsInCurrent) {
+                    alert("この項目はすでにこのゾーンに設定されています。");
+                    return;
+                }
+
+                // 1つだけに制限 → 既存をクリア
+                zone.innerHTML = "";
+                const newItem = document.createElement("div");
+                newItem.className = "flex items-center justify-between p-2 rounded-md border bg-slate-100 dark:bg-slate-700";
+
+                // ラベル部分
+                const labelSpan = document.createElement("span");
+                labelSpan.textContent = text;
+
+                // ×ボタン部分
+                const removeBtn = document.createElement("button");
+                removeBtn.innerHTML = "×";
+                removeBtn.className = "ml-2 text-red-500 font-bold cursor-pointer";
+
+                // 削除イベント
+                removeBtn.addEventListener("click", () => {
+                    zone.innerHTML = `
+                    <div class="flex max-w-xs flex-col items-center gap-1 text-center">
+                        <p class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            ${zone.classList.contains("row-zone") ? "行項目をドラッグ＆ドロップ" : "列項目をドラッグ＆ドロップ"}
+                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            利用可能な項目から項目をここにドラッグして、表を定義します。
+                        </p>
+                    </div>
+                    `;
+                    // 削除後に表示を更新
+                    updateDisplay();
+                });
+
+                // 要素を組み立てて追加
+                newItem.appendChild(labelSpan);
+                newItem.appendChild(removeBtn);
+                zone.appendChild(newItem);
+                
+                // ドロップ後に自動的に表示を更新
+                updateDisplay();
+            });
+        });
+        
+        // 更新ボタンのイベント
+        updateBtn.addEventListener("click", () => {
             updateDisplay();
         });
-    });
-    
-    // 更新ボタンのイベント
-    updateBtn.addEventListener("click", () => {
-        updateDisplay();
-    });
-    
-    // リセットボタンのイベント
-    resetBtn.addEventListener("click", () => {
-        resetDisplay();
+        
+        // リセットボタンのイベント
+        resetBtn.addEventListener("click", () => {
+            resetDisplay();
+        });
+        
+        console.log('✅ イベント設定完了');
     });
 });
